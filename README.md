@@ -57,4 +57,4 @@ Thailand Personal DF Name 0xA0, 0X00, 0x00, 0x00, 0x54, 0x48, 0x00, 0x01
 # Credits
 
 - [ThaiNationalIDCard](https://github.com/chakphanu/ThaiNationalIDCard)
-- [ThaiNationalIDCard.NET](
+- [ThaiNationalIDCard.NET](https://github.com/bencomtech/ThaiNationalIDCard.NET)
