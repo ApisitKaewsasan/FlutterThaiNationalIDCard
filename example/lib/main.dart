@@ -62,7 +62,7 @@ class _MyAppState extends State<MyApp> {
               TextButton(onPressed: () async {
                final personalInformation = await AcsCardReaderThailand.acsCardID();
 
-             print("ewfcwefce ${personalInformation.nameTH}");
+             print("ewfcwefce ${personalInformation.toJson()}");
               }, child: Text("ScanNow CardID")),
 
             ],

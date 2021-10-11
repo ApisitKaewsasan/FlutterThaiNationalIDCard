@@ -9,6 +9,8 @@ public class PersonalInformation {
     public String Address;
     public String  PictureTag;
     public  int Gender;
+    public  Boolean Status = true;
+    public  String Message;
 
 
 }

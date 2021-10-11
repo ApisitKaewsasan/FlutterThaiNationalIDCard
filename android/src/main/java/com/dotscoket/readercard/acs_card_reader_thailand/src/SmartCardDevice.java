@@ -88,17 +88,23 @@ public class SmartCardDevice {
 
     public void start() {
         // For each device
-
+  personalInformation.Status = true;
         // show the list of available terminals
 
+        if (mManager.getDeviceList().size() > 0) {
+            for (UsbDevice device : mManager.getDeviceList().values()) {
 
-        for (UsbDevice device : mManager.getDeviceList().values()) {
-
-            Log.d(TAG, device.getDeviceName());
-            // If device name is found
-            mManager.requestPermission(device, mPermissionIntent);
-            break;
+                Log.d(TAG, device.getDeviceName());
+                // If device name is found
+                mManager.requestPermission(device, mPermissionIntent);
+                break;
+            }
+        } else {
+            personalInformation.Status = false;
+            personalInformation.Message = "not found device";
+            eventCallback.OnSuceess(personalInformation);
         }
+
 
     }
 
@@ -109,8 +115,6 @@ public class SmartCardDevice {
         HashMap<String, UsbDevice> deviceList;
         UsbDevice device = null;
         SmartCardDevice cardDevice = null;
-
-
 
 
         manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
@@ -144,7 +148,7 @@ public class SmartCardDevice {
 
                         if (device != null) {
                             Log.d(TAG, "Opening reader:");
-                            SmartCardDevice.this.eventCallback.OnReady(SmartCardDevice.this);
+                           // SmartCardDevice.this.eventCallback.OnReady(SmartCardDevice.this);
 
                             new OpenTask().execute(device);
 
@@ -165,10 +169,10 @@ public class SmartCardDevice {
                 synchronized (this) {
 
                     Log.d(TAG, "Closing reader...");
-                    eventCallback.OnErrory("USB device is detached");
+                   // eventCallback.OnErrory("USB device is detached");
                     new CloseTask().execute();
                 }
-            }else if  (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
+            } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
                 Log.d(TAG, "ACTION_USB_DEVICE_ATTACHED");
 
             }
@@ -205,8 +209,15 @@ public class SmartCardDevice {
             if (result != null) {
 
 
-                Log.d(TAG, "OpenTask error : " + result.toString());
+
                 eventCallback.OnErrory(result.toString());
+                  if(personalInformation.Status){
+                    personalInformation.Status = false;
+            personalInformation.Message = "OpenTask error Device";
+            eventCallback.OnSuceess(personalInformation);
+               Log.d(TAG, "OpenTask error : " + result.toString());
+               }
+
 
             } else {
 
@@ -251,11 +262,7 @@ public class SmartCardDevice {
         @Override
         protected void onPostExecute(Void result) {
 
-            PowerParams params = new PowerParams();
-            params.slotNum = SLOTNUM; //0
-            params.action = Reader.CARD_POWER_DOWN;
 
-            new PowerTask().execute(params);
         }
 
     }
@@ -287,6 +294,7 @@ public class SmartCardDevice {
             } catch (Exception e) {
 
                 result.e = e;
+
             }
 
             return result;
@@ -296,8 +304,15 @@ public class SmartCardDevice {
         protected void onPostExecute(PowerResult result) {
 
             if (result.e != null) {
-                eventCallback.OnErrory(result.e.toString());
-                Log.d(TAG, "PowerTask : " + result.e.toString());
+               // eventCallback.OnErrory(result.e.toString());
+               if(personalInformation.Status){
+                    personalInformation.Status = false;
+            personalInformation.Message = "The card is not firmly inserted";
+            eventCallback.OnSuceess(personalInformation);
+              Log.d(TAG, "PowerTask : " + result.e.toString());
+               }
+
+
 
             } else {
 
@@ -421,7 +436,7 @@ public class SmartCardDevice {
     byte[] convertRequest(byte[] command) {
         byte[] request;
         if (mReader.getAtr(SLOTNUM)[0] == 0x3B && mReader.getAtr(SLOTNUM)[1] == 0x67) {
-            request = new byte[]{0x00, (byte) 0xc0, 0x00, 0x01,  command[command.length - 1]};
+            request = new byte[]{0x00, (byte) 0xc0, 0x00, 0x01, command[command.length - 1]};
         } else {
             request = new byte[]{0x00, (byte) 0xc0, 0x00, 0x00, command[command.length - 1]};
         }
@@ -431,7 +446,6 @@ public class SmartCardDevice {
 
 
     void GetData() {
-
 
 
         GetFullName();
@@ -463,11 +477,9 @@ public class SmartCardDevice {
         Photo_Part20();
 
 
-
-
     }
 
-    void GetFullName(){
+    void GetFullName() {
 
         // Transmit APDU FullnameTH
         new TransmitTask(mReader, new TaskEvent() {
@@ -486,7 +498,7 @@ public class SmartCardDevice {
             public void onFailure(Exception e) {
                 eventCallback.OnErrory(e.getMessage());
             }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.THFullName),ApduCommand.THFullName));
+        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.THFullName), ApduCommand.THFullName));
 
 
         // Transmit APDU FullnameEN
@@ -509,7 +521,7 @@ public class SmartCardDevice {
 
     }
 
-    void GetCID(){
+    void GetCID() {
         // Transmit APDU CID
         new TransmitTask(mReader, new TaskEvent() {
             @Override
@@ -534,7 +546,7 @@ public class SmartCardDevice {
 
     }
 
-    void GetBirthDate(){
+    void GetBirthDate() {
         // Transmit APDU Datebirth
         new TransmitTask(mReader, new TaskEvent() {
             @Override
@@ -557,7 +569,7 @@ public class SmartCardDevice {
 
     }
 
-    void GetGender(){
+    void GetGender() {
         // Transmit APDU Gender
         new TransmitTask(mReader, new TaskEvent() {
             @Override
@@ -565,7 +577,7 @@ public class SmartCardDevice {
                 try {
                     // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
                     Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-                    personalInformation.Gender  = Integer.parseInt(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim());
+                    personalInformation.Gender = Integer.parseInt(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim());
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
@@ -580,7 +592,7 @@ public class SmartCardDevice {
 
     }
 
-    void  GetAddress(){
+    void GetAddress() {
         // Transmit APDU Address
         new TransmitTask(mReader, new TaskEvent() {
             @Override
@@ -611,10 +623,10 @@ public class SmartCardDevice {
             public void onSuccess(TransmitProgress response) {
                 try {
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
 
 
-                    Log.d(TAG, "1 "+response.responseLength);
+                    Log.d(TAG, "1 " + response.responseLength);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -638,8 +650,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "2 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "2 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -664,8 +676,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "3 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "3 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -690,8 +702,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "4 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "4 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -716,8 +728,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "5 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "5 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -742,8 +754,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "6 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "6 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -768,8 +780,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "7 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "7 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -794,8 +806,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "8 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "8 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -820,8 +832,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "9 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "9 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -836,8 +848,9 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part9), ApduCommand.Photo_Part9));
     }
+
     // Transmit APDU Photo_Part10
-    void Photo_Part10 () {
+    void Photo_Part10() {
         new
 
                 TransmitTask(mReader, new TaskEvent() {
@@ -846,8 +859,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "10 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "10 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -862,6 +875,7 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part10), ApduCommand.Photo_Part10));
     }
+
     // Transmit APDU Photo_Part11
     void Photo_Part11() {
         new
@@ -872,8 +886,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "11 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "11 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -888,8 +902,9 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part11), ApduCommand.Photo_Part11));
     }
+
     // Transmit APDU Photo_Part12
-    void Photo_Part12 () {
+    void Photo_Part12() {
         new
 
                 TransmitTask(mReader, new TaskEvent() {
@@ -898,8 +913,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "12 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "12 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -914,8 +929,9 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part12), ApduCommand.Photo_Part12));
     }
+
     // Transmit APDU Photo_Part13
-    void Photo_Part13 () {
+    void Photo_Part13() {
         new
 
                 TransmitTask(mReader, new TaskEvent() {
@@ -924,8 +940,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "13 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "13 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -940,8 +956,9 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part13), ApduCommand.Photo_Part13));
     }
+
     // Transmit APDU Photo_Part14
-    void Photo_Part14 () {
+    void Photo_Part14() {
         new
 
                 TransmitTask(mReader, new TaskEvent() {
@@ -950,8 +967,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "14 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "14 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -966,16 +983,17 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part14), ApduCommand.Photo_Part14));
     }
+
     // Transmit APDU Photo_Part15
-    void Photo_Part15 () {
+    void Photo_Part15() {
         new TransmitTask(mReader, new TaskEvent() {
             @Override
             public void onSuccess(TransmitProgress response) {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "15 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "15 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -990,8 +1008,9 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part15), ApduCommand.Photo_Part15));
     }
+
     // Transmit APDU Photo_Part16
-    void Photo_Part16 () {
+    void Photo_Part16() {
         new
 
                 TransmitTask(mReader, new TaskEvent() {
@@ -1000,8 +1019,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "16 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "16 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1016,8 +1035,9 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part16), ApduCommand.Photo_Part16));
     }
+
     // Transmit APDU Photo_Part17
-    void Photo_Part17 () {
+    void Photo_Part17() {
         new
 
                 TransmitTask(mReader, new TaskEvent() {
@@ -1026,8 +1046,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "17 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "17 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1042,8 +1062,9 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part17), ApduCommand.Photo_Part17));
     }
+
     // Transmit APDU Photo_Part18
-    void Photo_Part18 () {
+    void Photo_Part18() {
         new
 
                 TransmitTask(mReader, new TaskEvent() {
@@ -1052,8 +1073,8 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "18 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "18 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1068,16 +1089,17 @@ public class SmartCardDevice {
 
                 execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part18), ApduCommand.Photo_Part18));
     }
+
     // Transmit APDU Photo_Part19
-    void Photo_Part19 () {
+    void Photo_Part19() {
         new TransmitTask(mReader, new TaskEvent() {
             @Override
             public void onSuccess(TransmitProgress response) {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "19 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "19 " + response.responseLength);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1090,8 +1112,9 @@ public class SmartCardDevice {
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part19), ApduCommand.Photo_Part19));
     }
+
     // Transmit APDU Photo_Part20
-    void Photo_Part20 () {
+    void Photo_Part20() {
         new
 
                 TransmitTask(mReader, new TaskEvent() {
@@ -1100,16 +1123,16 @@ public class SmartCardDevice {
                 try {
 
                     response_photo.add(response.response);
-                    photho_byte.write(response.response,0,response.responseLength);
-                    Log.d(TAG, "20 "+response.responseLength);
+                    photho_byte.write(response.response, 0, response.responseLength);
+                    Log.d(TAG, "20 " + response.responseLength);
                     //   Log.d(TAG, Arrays.toString(photho_byte.toByteArray()));
                     String encodedText = Base64Utils.encode(photho_byte.toByteArray());
-                    Log.d(TAG, "data:image/jpeg;base64,"+encodedText+"");
-                    byte[] photo = Bytes.concat(response_photo.get(0),response_photo.get(1),response_photo.get(2),response_photo.get(3),response_photo.get(4)
-                            ,response_photo.get(5),response_photo.get(6),response_photo.get(7),response_photo.get(8),response_photo.get(9),response_photo.get(10)
-                            ,response_photo.get(11),response_photo.get(12),response_photo.get(13),response_photo.get(14),response_photo.get(15),response_photo.get(16)
-                            ,response_photo.get(17),response_photo.get(18),response_photo.get(19));
-                   // personalInformation.PictureTag = encodedText;
+                    Log.d(TAG, "data:image/jpeg;base64," + encodedText + "");
+                    byte[] photo = Bytes.concat(response_photo.get(0), response_photo.get(1), response_photo.get(2), response_photo.get(3), response_photo.get(4)
+                            , response_photo.get(5), response_photo.get(6), response_photo.get(7), response_photo.get(8), response_photo.get(9), response_photo.get(10)
+                            , response_photo.get(11), response_photo.get(12), response_photo.get(13), response_photo.get(14), response_photo.get(15), response_photo.get(16)
+                            , response_photo.get(17), response_photo.get(18), response_photo.get(19));
+                    personalInformation.PictureTag = "data:image/jpeg;base64," + encodedText;
                     eventCallback.OnSuceess(personalInformation);
                     mReader.close();
                     // Photo_Part21();;
@@ -1126,8 +1149,7 @@ public class SmartCardDevice {
     }
 
 
-
-    private void logBuffer (String tag,byte[] buffer, int bufferLength){
+    private void logBuffer(String tag, byte[] buffer, int bufferLength) {
 
         String bufferString = "";
 
@@ -1156,7 +1178,7 @@ public class SmartCardDevice {
     }
 
 
-    private String toHexString ( int i){
+    private String toHexString(int i) {
 
         String hexString = Integer.toHexString(i);
         if (hexString.length() % 2 != 0) {
@@ -1166,7 +1188,7 @@ public class SmartCardDevice {
         return hexString.toUpperCase();
     }
 
-    private String toHexString ( byte[] buffer){
+    private String toHexString(byte[] buffer) {
 
         String bufferString = "";
 
@@ -1184,7 +1206,7 @@ public class SmartCardDevice {
     }
 
 
-    public void stop () {
+    public void stop() {
         mReader.close();
     }
 

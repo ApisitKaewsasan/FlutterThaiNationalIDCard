@@ -1,6 +1,8 @@
 package com.dotscoket.readercard.acs_card_reader_thailand;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -24,7 +26,7 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
   /// when the Flutter Engine is detached from the Activity
   private MethodChannel channel;
   private Context context;
-
+  private static final String TAG = "AcsCardReaderThailandPlugin";
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "acs_card_reader_thailand");
@@ -45,8 +47,7 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
   }
 
 
-  void acsReaderCard(@NonNull Result result){
-    System.out.println("xxxxx");
+  void acsReaderCard(Result result){
     SmartCardDevice.getSmartCardDevice(context, new SmartCardDeviceEvent() {
       @Override
       public void OnReady(SmartCardDevice device) {
@@ -71,11 +72,15 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
         Toast.makeText(context,message, Toast.LENGTH_SHORT).show();
       }
 
+      @SuppressLint("LongLogTag")
       @Override
       public void OnSuceess(PersonalInformation personalInformation) {
         Gson gson = new Gson();
-
+      try {
         result.success(gson.toJson(personalInformation));
+      }catch (Exception e){
+        Log.d(TAG,e.getMessage());
+      }
       }
     });
   }
