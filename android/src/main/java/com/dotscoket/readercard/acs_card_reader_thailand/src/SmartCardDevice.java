@@ -89,8 +89,13 @@ public class SmartCardDevice {
             for (UsbDevice device : mManager.getDeviceList().values()) {
 
                 Log.d(TAG, device.getDeviceName());
-                // If device name is found
-                mManager.requestPermission(device, mPermissionIntent);
+                if(mReader.isSupported(device)){
+                    // If device name is found
+                    mManager.requestPermission(device, mPermissionIntent);
+                }else{
+                    eventCallback.OnErrory("Device Is not Support");
+                }
+
                 break;
             }
         } else {
@@ -116,6 +121,8 @@ public class SmartCardDevice {
             Log.w(TAG, "USB manager not found");
             return null;
         }
+
+
 
         cardDevice = new SmartCardDevice(context, manager, eventCallback);
 
@@ -1169,7 +1176,7 @@ public class SmartCardDevice {
 
                     String encodedText = Base64Utils.encode(photho_byte.toByteArray());
                     personalInformation.PictureSubFix = encodedText.replaceAll("\\s+","");
-                    Log.d(TAG, encodedText+" "+encodedText.length());
+                  //  Log.d(TAG, encodedText+" "+encodedText.length());
                     eventCallback.OnSuceess(personalInformation);
                     mReader.close();
                     // Photo_Part21();;
