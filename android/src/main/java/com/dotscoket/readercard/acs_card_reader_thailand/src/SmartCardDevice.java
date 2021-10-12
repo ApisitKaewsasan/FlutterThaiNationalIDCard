@@ -9,18 +9,15 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.util.Log;
-
 import com.acs.smartcard.Reader;
-import com.dotscoket.readercard.acs_card_reader_thailand.AcsCardReaderThailandPlugin;
 import com.dotscoket.readercard.acs_card_reader_thailand.constant.ApduCommand;
+import com.dotscoket.readercard.acs_card_reader_thailand.constant.MessageKey;
 import com.dotscoket.readercard.acs_card_reader_thailand.interfaces.SmartCardDeviceEvent;
 import com.dotscoket.readercard.acs_card_reader_thailand.model.PersonalInformation;
 import com.dotscoket.readercard.acs_card_reader_thailand.model.TaskEvent;
 import com.dotscoket.readercard.acs_card_reader_thailand.model.TransmitParams;
 import com.dotscoket.readercard.acs_card_reader_thailand.model.TransmitProgress;
 import com.google.android.gms.common.util.Base64Utils;
-import com.google.common.primitives.Bytes;
-
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -93,14 +90,16 @@ public class SmartCardDevice {
                     // If device name is found
                     mManager.requestPermission(device, mPermissionIntent);
                 }else{
-                    eventCallback.OnErrory("Device Is not Support");
+                    personalInformation.Status = false;
+                    personalInformation.Message_code = MessageKey.NotSupport;
+                    eventCallback.OnSuceess(personalInformation);
                 }
 
                 break;
             }
         } else {
             personalInformation.Status = false;
-            personalInformation.Message = "not found device";
+            personalInformation.Message_code = MessageKey.NotFoundDevice;
             eventCallback.OnSuceess(personalInformation);
         }
 
@@ -160,7 +159,9 @@ public class SmartCardDevice {
                     } else {
 
                         Log.d(TAG, "Permission denied for device");
-                        eventCallback.OnErrory("Permission denied for device");
+                        personalInformation.Status = false;
+                        personalInformation.Message_code = MessageKey.NotSupport;
+                        eventCallback.OnSuceess(personalInformation);
 
                     }
                 }
@@ -170,7 +171,7 @@ public class SmartCardDevice {
                 synchronized (this) {
 
                     Log.d(TAG, "Closing reader...");
-                   // eventCallback.OnErrory("USB device is detached");
+
                     new CloseTask().execute();
                 }
             } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
@@ -211,10 +212,9 @@ public class SmartCardDevice {
 
 
 
-                eventCallback.OnErrory(result.toString());
                   if(personalInformation.Status){
                     personalInformation.Status = false;
-            personalInformation.Message = "OpenTask error Device";
+            personalInformation.Message_code = MessageKey.OpenTaskError;
             eventCallback.OnSuceess(personalInformation);
                Log.d(TAG, "OpenTask error : " + result.toString());
                }
@@ -305,10 +305,9 @@ public class SmartCardDevice {
         protected void onPostExecute(PowerResult result) {
 
             if (result.e != null) {
-               // eventCallback.OnErrory(result.e.toString());
                if(personalInformation.Status){
                     personalInformation.Status = false;
-            personalInformation.Message = "The card is not firmly inserted";
+            personalInformation.Message_code = MessageKey.NotInserted;
             eventCallback.OnSuceess(personalInformation);
               Log.d(TAG, "PowerTask : " + result.e.toString());
                }
@@ -429,7 +428,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, ApduCommand.Select, null));
     }
@@ -500,7 +499,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.THFullName), ApduCommand.THFullName));
 
@@ -519,7 +518,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.ENFullname), ApduCommand.ENFullname));
 
@@ -543,7 +542,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.CID), ApduCommand.CID));
 
@@ -566,7 +565,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Datebirth), ApduCommand.Datebirth));
 
@@ -589,7 +588,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Gender), ApduCommand.Gender));
 
@@ -613,7 +612,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Address), ApduCommand.Address));
     }
@@ -636,7 +635,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.CardIssuer), ApduCommand.CardIssuer));
     }
@@ -659,7 +658,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.IssueDate), ApduCommand.IssueDate));
     }
@@ -680,7 +679,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.ExpireDate), ApduCommand.ExpireDate));
     }
@@ -704,7 +703,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -729,7 +728,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -754,7 +753,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -779,7 +778,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -804,7 +803,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -829,7 +828,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -854,7 +853,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -879,7 +878,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -904,7 +903,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -930,7 +929,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -956,7 +955,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -982,7 +981,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -1008,7 +1007,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -1034,7 +1033,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -1058,7 +1057,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -1084,7 +1083,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -1110,7 +1109,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -1136,7 +1135,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).
 
@@ -1161,7 +1160,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part19), ApduCommand.Photo_Part19));
     }
@@ -1187,7 +1186,7 @@ public class SmartCardDevice {
 
             @Override
             public void onFailure(Exception e) {
-                eventCallback.OnErrory(e.getMessage());
+                Log.d(TAG,e.getMessage());
             }
         }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part20), ApduCommand.Photo_Part20));
     }

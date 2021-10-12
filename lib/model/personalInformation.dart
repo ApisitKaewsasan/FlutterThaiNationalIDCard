@@ -12,7 +12,7 @@ class PersonalInformation {
   String? IssueDate;
   String? ExpireDate;
   bool ? status;
-  String? message;
+  int? Message_code;
 
   PersonalInformation(
       {this.address,
@@ -20,7 +20,7 @@ class PersonalInformation {
         this.gender,
         this.nameEN,
         this.nameTH,
-        this.personalID,this.PicturePreFix,this.PictureSubFix,this.status,this.message});
+        this.personalID,this.PicturePreFix,this.PictureSubFix,this.status,this.Message_code});
 
   PersonalInformation.fromJson(Map<String, dynamic> json) {
     address = json['Address'];
@@ -35,7 +35,7 @@ class PersonalInformation {
     IssueDate = json['IssueDate'];
     ExpireDate = json['ExpireDate'];
     status = json['Status'];
-    message = json['Message'];
+    Message_code = json['Message_code'];
   }
 
   Map<String, dynamic> toJson() {
@@ -52,7 +52,7 @@ class PersonalInformation {
     data['IssueDate'] = this.IssueDate;
     data['ExpireDate'] = this.ExpireDate;
     data['Status'] = this.status;
-    data['Message'] = this.message;
+    data['Message_code'] = this.Message_code;
     return data;
   }
 }

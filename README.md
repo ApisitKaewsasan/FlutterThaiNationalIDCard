@@ -10,6 +10,13 @@ Suport OS
 
 - Android
 
+Error Message Rspone
+  0 => OpenTask error Device
+  1 => The card is not firmly inserted
+  2 => Permission denied for device
+  3 => Device Is not Support
+  4 => Not found device
+
 APDU Command
 
 Get response 0x00, 0xC0, 0x00, 0x00 + Len in hex

@@ -13,7 +13,7 @@ public class PersonalInformation {
     public String CardIssuer;
     public String IssueDate;
     public String ExpireDate;
-    public Boolean Status = true;
-    public String Message;
+    public Boolean Status = false;
+    public int Message_code;
 
 }

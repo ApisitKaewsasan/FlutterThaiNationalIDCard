@@ -69,7 +69,7 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
 
       @Override
       public void OnErrory(String message) {
-      //  Toast.makeText(context,message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(context,message, Toast.LENGTH_SHORT).show();
       }
 
       @SuppressLint("LongLogTag")

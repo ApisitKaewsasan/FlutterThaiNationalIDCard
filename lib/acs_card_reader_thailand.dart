@@ -16,8 +16,7 @@ class AcsCardReaderThailand {
   }
 
   static Future<PersonalInformation> acsCardID() async {
-
-    return Platform.isAndroid?thailandCard():Future.value(PersonalInformation(status: false,message: "Not Support IOS"));
+    return Platform.isAndroid?thailandCard():Future.value(PersonalInformation(status: false,Message_code: 4));
   }
 
   static Future<PersonalInformation> thailandCard() async {

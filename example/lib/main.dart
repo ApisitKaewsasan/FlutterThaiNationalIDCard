@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  late PersonalInformation personalInformation = PersonalInformation();
+  late PersonalInformation personalInformation = PersonalInformation(status: false);
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +110,7 @@ class _MyAppState extends State<MyApp> {
                       Expanded(flex: 2, child: Text('${personalInformation
                           .gender == 1 ? 'ชาย' : personalInformation.gender == 2
                           ? 'หญิง'
-                          : '' ??
+                          :
                           '-------------------- -------------------'} ')),
                     ],
                   ),
@@ -174,7 +174,7 @@ class _MyAppState extends State<MyApp> {
 
   Widget getImagenBase64(String imagen) {
     const Base64Codec base64 = Base64Codec();
-    if (imagen.length <= 0) return new Container(
+    if (personalInformation.status == false) return new Container(
       padding: EdgeInsets.all(20),
       color: Colors.grey.shade400,
       child: Icon(Icons.person_add, size: 100, color: Colors.grey.shade500,),
