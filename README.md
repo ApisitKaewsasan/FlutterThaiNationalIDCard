@@ -11,11 +11,12 @@ Suport OS
 - Android
 
 Error Message Rspone
-  0 => OpenTask error Device
-  1 => The card is not firmly inserted
-  2 => Permission denied for device
-  3 => Device Is not Support
-  4 => Not found device
+
+- 0 => OpenTask error Device
+- 1 => The card is not firmly inserted
+-  2 => Permission denied for device
+-  3 => Device Is not Support
+-  4 => Not found device
 
 APDU Command
 
@@ -64,4 +65,4 @@ Thailand Personal DF Name 0xA0, 0X00, 0x00, 0x00, 0x54, 0x48, 0x00, 0x01
 # Credits
 
 - [ThaiNationalIDCard](https://github.com/chakphanu/ThaiNationalIDCard)
-- [ThaiNationalIDCard.NET](https://github.com/bencomtech/ThaiNationalIDCard.NET)
+- [ThaiNationalIDCard.NET](
