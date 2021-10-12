@@ -1,6 +1,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 
@@ -15,6 +16,11 @@ class AcsCardReaderThailand {
   }
 
   static Future<PersonalInformation> acsCardID() async {
+
+    return Platform.isAndroid?thailandCard():Future.value(PersonalInformation(status: false,message: "Not Support IOS"));
+  }
+
+  static Future<PersonalInformation> thailandCard() async {
     dynamic data = await (_channel.invokeMethod("acs_card"));
     return PersonalInformation.fromJson(jsonDecode(data));
   }
