@@ -11,9 +11,7 @@ import 'model/personalInformation.dart';
 class AcsCardReaderThailand {
   static const MethodChannel _channel = MethodChannel('acs_card_reader_thailand');
 
-
   static const EventChannel messageChannel = EventChannel('eventChannelStream');
-
 
 
   static  Stream<bool> get messageStream async* {
