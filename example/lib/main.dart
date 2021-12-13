@@ -25,6 +25,8 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
+
+
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -51,8 +53,14 @@ class _MyAppState extends State<MyApp> {
 
   late PersonalInformation personalInformation = PersonalInformation(status: false);
 
+  onConnectDevice() async {
+     AcsCardReaderThailand.messageStream.listen((event) {
+      print(event);
+    });
+  }
   @override
   Widget build(BuildContext context) {
+    onConnectDevice();
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(

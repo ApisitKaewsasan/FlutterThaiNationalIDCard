@@ -7,8 +7,20 @@ import 'package:flutter/services.dart';
 
 import 'model/personalInformation.dart';
 
+
 class AcsCardReaderThailand {
   static const MethodChannel _channel = MethodChannel('acs_card_reader_thailand');
+
+
+  static const EventChannel messageChannel = EventChannel('eventChannelStream');
+
+
+
+  static  Stream<bool> get messageStream async* {
+    await for (bool message in messageChannel.receiveBroadcastStream().map((message) => message)){
+      yield message;
+    }
+  }
 
   static Future<String?> get platformVersion async {
     final String? version = await _channel.invokeMethod('getPlatformVersion');

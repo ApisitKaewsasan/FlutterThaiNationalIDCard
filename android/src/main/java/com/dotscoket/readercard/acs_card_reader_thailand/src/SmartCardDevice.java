@@ -107,6 +107,7 @@ public class SmartCardDevice {
     }
 
 
+
     public static SmartCardDevice getSmartCardDevice(Context context, SmartCardDeviceEvent eventCallback) {
 
         UsbManager manager;
@@ -141,7 +142,7 @@ public class SmartCardDevice {
             if (ACTION_USB_PERMISSION.equals(action)) {
 
                 synchronized (this) {
-
+                    Log.d(TAG, "Opening USB:");
                     UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
@@ -419,10 +420,11 @@ public class SmartCardDevice {
 
             @Override
             public void onSuccess(TransmitProgress response) {
+                logBuffer("Applet:", response.response,response.responseLength);
                 logBuffer("Command:", response.command, response.commandLength);
 
 
-                logBuffer("Applet:", response.response,response.responseLength-2);
+
                 GetData();
             }
 
