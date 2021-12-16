@@ -20,6 +20,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
+  bool isCheck_btn = true;
 
   @override
   void initState() {
@@ -162,12 +163,18 @@ class _MyAppState extends State<MyApp> {
                   TextButton(
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all(
-                            Colors.blueAccent),
+                            isCheck_btn?Colors.blueAccent:Colors.grey.shade400),
                       ),
                       onPressed: () async {
+                      if(isCheck_btn){
+                        isCheck_btn = false;
+                        setState(() {});
                         personalInformation =
                         await AcsCardReaderThailand.acsCardID();
+                        isCheck_btn = true;
                         setState(() {});
+                      }
+
                       },
                       child: Text("ScanNow CardID",
                         style: TextStyle(color: Colors.white),)),
@@ -193,4 +200,7 @@ class _MyAppState extends State<MyApp> {
       fit: BoxFit.fitWidth,
     );
   }
+
+
+
 }

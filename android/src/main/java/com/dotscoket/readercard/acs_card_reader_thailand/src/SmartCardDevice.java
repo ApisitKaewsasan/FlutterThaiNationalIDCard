@@ -217,7 +217,9 @@ public class SmartCardDevice {
                     personalInformation.Status = false;
             personalInformation.Message_code = MessageKey.OpenTaskError;
             eventCallback.OnSuceess(personalInformation);
+            
                Log.d(TAG, "OpenTask error : " + result.toString());
+               mReader.close();
                }
 
 

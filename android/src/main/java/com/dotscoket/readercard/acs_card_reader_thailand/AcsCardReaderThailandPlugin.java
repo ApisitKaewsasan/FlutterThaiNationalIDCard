@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.acs.smartcard.Reader;
 import com.dotscoket.readercard.acs_card_reader_thailand.interfaces.BroadcastUSBEvent;
 import com.dotscoket.readercard.acs_card_reader_thailand.interfaces.SmartCardDeviceEvent;
 import com.dotscoket.readercard.acs_card_reader_thailand.model.PersonalInformation;
@@ -121,6 +122,7 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
       try {
         result.success(gson.toJson(personalInformation));
       }catch (Exception e){
+        
         Log.d(TAG,e.getMessage());
       }
       }
