@@ -122,7 +122,6 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
       try {
         result.success(gson.toJson(personalInformation));
       }catch (Exception e){
-        
         Log.d(TAG,e.getMessage());
       }
       }

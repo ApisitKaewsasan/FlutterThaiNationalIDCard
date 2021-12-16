@@ -10,6 +10,7 @@ import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.util.Log;
 import com.acs.smartcard.Reader;
+import com.acs.smartcard.ReaderException;
 import com.dotscoket.readercard.acs_card_reader_thailand.constant.ApduCommand;
 import com.dotscoket.readercard.acs_card_reader_thailand.constant.MessageKey;
 import com.dotscoket.readercard.acs_card_reader_thailand.interfaces.SmartCardDeviceEvent;
@@ -37,7 +38,6 @@ public class SmartCardDevice {
     private Context context;
     private SmartCardDeviceEvent eventCallback = null;
     private PendingIntent mPermissionIntent;
-    ByteArrayOutputStream photho_byte = new ByteArrayOutputStream();
     PersonalInformation personalInformation = new PersonalInformation();
 
     public SmartCardDevice(Context context, UsbManager manager, SmartCardDeviceEvent eventCallback) {
@@ -79,6 +79,7 @@ public class SmartCardDevice {
 
     public void start() {
         // For each device
+
   personalInformation.Status = true;
         // show the list of available terminals
 
@@ -425,8 +426,6 @@ public class SmartCardDevice {
                 logBuffer("Applet:", response.response,response.responseLength);
                 logBuffer("Command:", response.command, response.commandLength);
 
-
-
                 GetData();
             }
 
@@ -436,6 +435,45 @@ public class SmartCardDevice {
             }
         }).execute(new TransmitParams(SLOTNUM, -1, ApduCommand.Select, null));
     }
+
+    void GetData() {
+
+        // Transmit APDU FullnameTH
+        personalInformation.NameTH = transmitCommand(ApduCommand.THFullName).replace("#"," ").trim();
+
+
+        // Transmit APDU FullnameEN
+        personalInformation.NameEN = transmitCommand(ApduCommand.ENFullname).replace("#"," ").trim();
+
+        // Transmit APDU CID
+        personalInformation.PersonalID = transmitCommand(ApduCommand.CID);
+
+        // Transmit APDU Datebirth
+        personalInformation.BirthDate = transmitCommand(ApduCommand.Datebirth);
+
+        // Transmit APDU Gender
+        personalInformation.Gender = Integer.parseInt(transmitCommand(ApduCommand.Gender));
+
+        // Transmit APDU Address
+        personalInformation.Address =  transmitCommand(ApduCommand.Address).replace("####"," ").replace("#"," ").trim();
+
+        // Transmit APDU CardIssuer
+        personalInformation.CardIssuer =  transmitCommand(ApduCommand.CardIssuer).replace("####"," ").replace("#"," ").trim();
+
+        // Transmit APDU IssueDate
+        personalInformation.IssueDate =  transmitCommand(ApduCommand.IssueDate).replace("####"," ").replace("#"," ").trim();
+
+        // Transmit APDU ExpireDate
+        personalInformation.ExpireDate =  transmitCommand(ApduCommand.ExpireDate).replace("####"," ").replace("#"," ").trim();
+
+        // Transmit APDU Photo Card
+        personalInformation.PictureSubFix = transmitCommandPhotoCard().replaceAll("\\s+","");
+
+
+        eventCallback.OnSuceess(personalInformation);
+        //mReader.close();
+    }
+
 
     byte[] convertRequest(byte[] command) {
         byte[] request;
@@ -449,751 +487,48 @@ public class SmartCardDevice {
     }
 
 
-    void GetData() {
 
-
-        GetFullName();
-        GetCID();
-        GetBirthDate();
-        GetGender();
-        GetAddress();
-        GetCardIssuer();
-        GetIssueDate();
-        GetExpireDate();
-
-
-        Photo_Part1();
-        Photo_Part2();
-        Photo_Part3();
-        Photo_Part4();
-        Photo_Part5();
-        Photo_Part6();
-        Photo_Part7();
-        Photo_Part8();
-        Photo_Part9();
-        Photo_Part10();
-        Photo_Part11();
-        Photo_Part12();
-        Photo_Part13();
-        Photo_Part14();
-        Photo_Part15();
-        Photo_Part16();
-        Photo_Part17();
-        Photo_Part18();
-        Photo_Part19();
-        Photo_Part20();
-
-
+    String transmitCommand(byte[] command) {
+        byte[] response = new byte[300];
+        int responsLength;
+        String  result = "---";
+        try {
+            mReader.transmit(SLOTNUM, command, command.length, response, response.length);
+            responsLength = mReader.transmit(SLOTNUM, convertRequest(command), convertRequest(command).length, response, response.length);
+            result = String.valueOf(new String(response, "TIS620").substring(0, responsLength - 2).trim());
+            Log.d(TAG, result);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            Log.d(TAG, e.getMessage());
+        }catch (ReaderException e){
+            e.printStackTrace();
+            Log.d(TAG, e.getMessage());
+        }
+        return result;
     }
 
-    void GetFullName() {
+    String transmitCommandPhotoCard() {
+        ByteArrayOutputStream photho_byte = new ByteArrayOutputStream();
+        try {
+            byte[] response = new byte[500];
+            int responsLength;
 
-        // Transmit APDU FullnameTH
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
-                    Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-                    personalInformation.NameTH = new String(response.response, "TIS620").substring(0, response.responseLength - 2).replace("#"," ").trim();
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+            for (int i = 0; i < ApduCommand.PictureCard.length; i++) {
+                mReader.transmit(SLOTNUM, ApduCommand.PictureCard[i], ApduCommand.PictureCard[i].length, response, response.length);
+                responsLength = mReader.transmit(SLOTNUM, ApduCommand.Photo_Data, ApduCommand.Photo_Data.length, response, response.length);
+                photho_byte.write(response, 0, responsLength - 2);
             }
 
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.THFullName), ApduCommand.THFullName));
 
-
-        // Transmit APDU FullnameEN
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));\
-                    personalInformation.NameEN = new String(response.response, "TIS620").substring(0, response.responseLength - 2).replace("#"," ").trim();
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.ENFullname), ApduCommand.ENFullname));
-
-    }
-
-    void GetCID() {
-        // Transmit APDU CID
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
-                    Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-
-                    personalInformation.PersonalID = new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim();
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.CID), ApduCommand.CID));
-
-
-    }
-
-    void GetBirthDate() {
-        // Transmit APDU Datebirth
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
-                    Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-                    personalInformation.BirthDate = new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim();
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Datebirth), ApduCommand.Datebirth));
-
-
-    }
-
-    void GetGender() {
-        // Transmit APDU Gender
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
-                    Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-                    personalInformation.Gender = Integer.parseInt(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim());
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Gender), ApduCommand.Gender));
-
-
-    }
-
-    void GetAddress() {
-        // Transmit APDU Address
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
-                    Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-                    personalInformation.Address = new String(response.response, "TIS620").substring(0, response.responseLength - 2).replace("####"," ").replace("#"," ").trim();
-
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Address), ApduCommand.Address));
+        }catch (ReaderException e){
+            e.printStackTrace();
+            Log.d(TAG, e.getMessage());
+        }
+        return Base64Utils.encode(photho_byte.toByteArray());
     }
 
 
-    void GetCardIssuer() {
-        // Transmit APDU Address
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
-                    Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-                    personalInformation.CardIssuer = new String(response.response, "TIS620").substring(0, response.responseLength - 2).replace("####"," ").replace("#"," ").trim();
 
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.CardIssuer), ApduCommand.CardIssuer));
-    }
-
-
-    void GetIssueDate() {
-        // Transmit APDU Address
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
-                    Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-                    personalInformation.IssueDate = new String(response.response, "TIS620").substring(0, response.responseLength - 2).replace("####"," ").replace("#"," ").trim();
-
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.IssueDate), ApduCommand.IssueDate));
-    }
-
-    void GetExpireDate() {
-        // Transmit APDU Address
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    // Log.d(TAG, String.valueOf(new String(Arrays.copyOfRange(response1, 0, 13), "TIS620")));
-                    Log.d(TAG, String.valueOf(new String(response.response, "TIS620").substring(0, response.responseLength - 2).trim()));
-                    personalInformation.ExpireDate = new String(response.response, "TIS620").substring(0, response.responseLength - 2).replace("####"," ").replace("#"," ").trim();
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.ExpireDate), ApduCommand.ExpireDate));
-    }
-
-
-    // Transmit APDU Photo_Part1
-
-    void Photo_Part1() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part1), ApduCommand.Photo_Part1));
-    }
-
-    // Transmit APDU Photo_Part2
-    void Photo_Part2() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part2), ApduCommand.Photo_Part2));
-    }
-
-    // Transmit APDU Photo_Part3
-    void Photo_Part3() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part3), ApduCommand.Photo_Part3));
-    }
-
-    // Transmit APDU Photo_Part4
-    void Photo_Part4() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part4), ApduCommand.Photo_Part4));
-    }
-
-    // Transmit APDU Photo_Part5
-    void Photo_Part5() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part5), ApduCommand.Photo_Part5));
-    }
-
-    // Transmit APDU Photo_Part6
-    void Photo_Part6() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part6), ApduCommand.Photo_Part6));
-    }
-
-    // Transmit APDU Photo_Part7
-    void Photo_Part7() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part7), ApduCommand.Photo_Part7));
-    }
-
-    // Transmit APDU Photo_Part8
-    void Photo_Part8() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part8), ApduCommand.Photo_Part8));
-    }
-
-    // Transmit APDU Photo_Part9
-    void Photo_Part9() {
-
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part9), ApduCommand.Photo_Part9));
-    }
-
-    // Transmit APDU Photo_Part10
-    void Photo_Part10() {
-        new
-
-                TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part10), ApduCommand.Photo_Part10));
-    }
-
-    // Transmit APDU Photo_Part11
-    void Photo_Part11() {
-        new
-
-                TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part11), ApduCommand.Photo_Part11));
-    }
-
-    // Transmit APDU Photo_Part12
-    void Photo_Part12() {
-        new
-
-                TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part12), ApduCommand.Photo_Part12));
-    }
-
-    // Transmit APDU Photo_Part13
-    void Photo_Part13() {
-        new
-
-                TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part13), ApduCommand.Photo_Part13));
-    }
-
-    // Transmit APDU Photo_Part14
-    void Photo_Part14() {
-        new
-
-                TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part14), ApduCommand.Photo_Part14));
-    }
-
-    // Transmit APDU Photo_Part15
-    void Photo_Part15() {
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part15), ApduCommand.Photo_Part15));
-    }
-
-    // Transmit APDU Photo_Part16
-    void Photo_Part16() {
-        new
-
-                TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part16), ApduCommand.Photo_Part16));
-    }
-
-    // Transmit APDU Photo_Part17
-    void Photo_Part17() {
-        new
-
-                TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part17), ApduCommand.Photo_Part17));
-    }
-
-    // Transmit APDU Photo_Part18
-    void Photo_Part18() {
-        new
-
-                TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).
-
-                execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part18), ApduCommand.Photo_Part18));
-    }
-
-    // Transmit APDU Photo_Part19
-    void Photo_Part19() {
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-
-                    
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part19), ApduCommand.Photo_Part19));
-    }
-
-    // Transmit APDU Photo_Part20
-    void Photo_Part20() {
-        new TransmitTask(mReader, new TaskEvent() {
-            @Override
-            public void onSuccess(TransmitProgress response) {
-                try {
-                    photho_byte.write(response.response, 0,response.responseLength-2);
-
-                    String encodedText = Base64Utils.encode(photho_byte.toByteArray());
-                    personalInformation.PictureSubFix = encodedText.replaceAll("\\s+","");
-                  //  Log.d(TAG, encodedText+" "+encodedText.length());
-                    eventCallback.OnSuceess(personalInformation);
-                    mReader.close();
-                    // Photo_Part21();;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Log.d(TAG,e.getMessage());
-            }
-        }).execute(new TransmitParams(SLOTNUM, -1, convertRequest(ApduCommand.Photo_Part20), ApduCommand.Photo_Part20));
-    }
 
 
     private void logBuffer(String tag, byte[] buffer, int bufferLength) {

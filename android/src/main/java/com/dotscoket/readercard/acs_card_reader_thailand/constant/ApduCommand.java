@@ -38,4 +38,12 @@ public final class ApduCommand {
     public static byte[] Photo_Part18 = new byte[]{(byte) 0x80, (byte) 0xb0, 0x12, 0x6A, 0x02, 0x00, (byte) 0xFF};
     public static byte[] Photo_Part19 = new byte[]{(byte) 0x80, (byte) 0xb0, 0x13, 0x69, 0x02, 0x00, (byte) 0xFF};
     public  static byte[] Photo_Part20 = new byte[]{(byte) 0x80, (byte) 0xb0, 0x14, 0x68, 0x02, 0x00, (byte) 0xFF};
+
+    public static byte[] Photo_Data = new byte[]{(byte) 0x00, (byte) 0xC0, (byte) 0x00, (byte) 0x00, (byte) 0xFF};
+    
+    public static byte[][] PictureCard = {
+            Photo_Part1,Photo_Part2,Photo_Part3,Photo_Part4,Photo_Part5,Photo_Part6,Photo_Part7,Photo_Part8,Photo_Part9,
+            Photo_Part10,Photo_Part11,Photo_Part12,Photo_Part13,Photo_Part14,Photo_Part15,Photo_Part16,Photo_Part17,
+            Photo_Part18,Photo_Part19,Photo_Part20
+    };
 }
