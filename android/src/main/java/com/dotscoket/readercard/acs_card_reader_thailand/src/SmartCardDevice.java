@@ -138,7 +138,8 @@ public class SmartCardDevice {
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
         public void onReceive(Context context, Intent intent) {
-            if(!reading){
+            if(!reading && !mReader.isOpened()){
+                print("cccza008");
                 reading = true;
                 String action = intent.getAction();
                 if (ACTION_USB_PERMISSION.equals(action)) {
@@ -165,6 +166,7 @@ public class SmartCardDevice {
                             personalInformation.Status = false;
                             personalInformation.Message_code = MessageKey.NotSupport;
                             eventCallback.OnSuceess(personalInformation);
+                            new CloseTask().execute();
 
                         }
                     }
@@ -221,9 +223,9 @@ public class SmartCardDevice {
                     personalInformation.Status = false;
             personalInformation.Message_code = MessageKey.OpenTaskError;
             eventCallback.OnSuceess(personalInformation);
-                      reading = false;
+                     
                Log.d(TAG, "OpenTask error : " + result.toString());
-               mReader.close();
+                      new CloseTask().execute();
                }
 
 

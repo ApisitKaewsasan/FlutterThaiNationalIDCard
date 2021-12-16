@@ -55,8 +55,20 @@ class _MyAppState extends State<MyApp> {
   late PersonalInformation personalInformation = PersonalInformation(status: false);
 
   onConnectDevice() async {
-     AcsCardReaderThailand.messageStream.listen((event) {
-      print(event);
+     AcsCardReaderThailand.messageStream.listen((event) async {
+      if(event){
+        if(isCheck_btn){
+          isCheck_btn = false;
+          setState(() {});
+          personalInformation =
+              await AcsCardReaderThailand.acsCardID();
+          isCheck_btn = true;
+          setState(() {});
+        }
+      }else{
+        personalInformation = PersonalInformation();
+        setState(() {});
+      }
     });
   }
   @override
