@@ -139,8 +139,7 @@ public class SmartCardDevice {
 
         public void onReceive(Context context, Intent intent) {
             if(!reading && !mReader.isOpened()){
-               
-                Log.d(TAG, "cccza008");
+                
                 reading = true;
                 String action = intent.getAction();
                 if (ACTION_USB_PERMISSION.equals(action)) {
