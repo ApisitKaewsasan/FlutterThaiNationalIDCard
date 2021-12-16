@@ -79,7 +79,6 @@ public class SmartCardDevice {
 
     public void start() {
         // For each device
-        
   personalInformation.Status = true;
         // show the list of available terminals
 
@@ -88,6 +87,7 @@ public class SmartCardDevice {
 
                 Log.d(TAG, device.getDeviceName());
                 if(mReader.isSupported(device)){
+
                     // If device name is found
                     mManager.requestPermission(device, mPermissionIntent);
                 }else{
