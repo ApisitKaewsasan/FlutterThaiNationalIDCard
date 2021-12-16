@@ -79,7 +79,7 @@ public class SmartCardDevice {
 
     public void start() {
         // For each device
-
+        
   personalInformation.Status = true;
         // show the list of available terminals
 
@@ -471,7 +471,7 @@ public class SmartCardDevice {
 
 
         eventCallback.OnSuceess(personalInformation);
-        //mReader.close();
+        mReader.close();
     }
 
 
