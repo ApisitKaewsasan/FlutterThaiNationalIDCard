@@ -39,6 +39,7 @@ public class SmartCardDevice {
     private SmartCardDeviceEvent eventCallback = null;
     private PendingIntent mPermissionIntent;
     PersonalInformation personalInformation = new PersonalInformation();
+    private Boolean reading = false;
 
     public SmartCardDevice(Context context, UsbManager manager, SmartCardDeviceEvent eventCallback) {
 
@@ -137,49 +138,51 @@ public class SmartCardDevice {
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
         public void onReceive(Context context, Intent intent) {
+            if(!reading){
+                reading = true;
+                String action = intent.getAction();
+                if (ACTION_USB_PERMISSION.equals(action)) {
 
-            String action = intent.getAction();
+                    synchronized (this) {
+                        Log.d(TAG, "Opening USB:");
+                        UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 
-            if (ACTION_USB_PERMISSION.equals(action)) {
+                        if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
 
-                synchronized (this) {
-                    Log.d(TAG, "Opening USB:");
-                    UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                            if (device != null) {
+                                Log.d(TAG, "Opening reader:");
+                                // SmartCardDevice.this.eventCallback.OnReady(SmartCardDevice.this);
 
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                                new OpenTask().execute(device);
 
-                        if (device != null) {
-                            Log.d(TAG, "Opening reader:");
-                           // SmartCardDevice.this.eventCallback.OnReady(SmartCardDevice.this);
+                                // show the list of available terminals
 
-                            new OpenTask().execute(device);
+                            }
 
-                            // show the list of available terminals
+                        } else {
+
+                            Log.d(TAG, "Permission denied for device");
+                            personalInformation.Status = false;
+                            personalInformation.Message_code = MessageKey.NotSupport;
+                            eventCallback.OnSuceess(personalInformation);
 
                         }
-
-                    } else {
-
-                        Log.d(TAG, "Permission denied for device");
-                        personalInformation.Status = false;
-                        personalInformation.Message_code = MessageKey.NotSupport;
-                        eventCallback.OnSuceess(personalInformation);
-
                     }
+
+                } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+
+                    synchronized (this) {
+
+                        Log.d(TAG, "Closing reader...");
+
+                        new CloseTask().execute();
+                    }
+                } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
+                    Log.d(TAG, "ACTION_USB_DEVICE_ATTACHED");
+
                 }
-
-            } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-
-                synchronized (this) {
-
-                    Log.d(TAG, "Closing reader...");
-
-                    new CloseTask().execute();
-                }
-            } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-                Log.d(TAG, "ACTION_USB_DEVICE_ATTACHED");
-
             }
+
         }
     };
 
@@ -218,7 +221,7 @@ public class SmartCardDevice {
                     personalInformation.Status = false;
             personalInformation.Message_code = MessageKey.OpenTaskError;
             eventCallback.OnSuceess(personalInformation);
-            
+                      reading = false;
                Log.d(TAG, "OpenTask error : " + result.toString());
                mReader.close();
                }
@@ -259,7 +262,7 @@ public class SmartCardDevice {
 
         @Override
         protected Void doInBackground(Void... params) {
-
+            reading = false;
             mReader.close();
             return null;
         }
