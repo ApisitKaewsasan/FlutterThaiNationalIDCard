@@ -594,9 +594,6 @@ public class SmartCardDevice {
     }
 
 
-    public void stop() {
-        mReader.close();
-    }
 
 }
 

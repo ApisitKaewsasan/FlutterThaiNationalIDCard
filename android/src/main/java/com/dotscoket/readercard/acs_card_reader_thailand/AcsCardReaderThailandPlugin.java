@@ -122,7 +122,7 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
             @Override
             public void OnSuceess(PersonalInformation personalInformation) {
 
-                if(!personalInformation.Status){
+                if(!personalInformation.Status && (personalInformation.Message_code == 0 || personalInformation.Message_code == 1) ){
                     acsReaderCard(result_pa);
                 }else{
                     Gson gson = new Gson();

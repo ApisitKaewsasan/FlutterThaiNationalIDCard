@@ -66,7 +66,8 @@ class _MyAppState extends State<MyApp> {
           setState(() {});
         }
       }else{
-        personalInformation = PersonalInformation();
+        isCheck_btn = true;
+        personalInformation = PersonalInformation(status: false);
         setState(() {});
       }
     });
@@ -86,7 +87,7 @@ class _MyAppState extends State<MyApp> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  getImagenBase64(personalInformation.PictureSubFix.toString()),
+                  personalInformation.status!?getImagenBase64(personalInformation.PictureSubFix.toString()):SizedBox(),
                   SizedBox(height: 20,),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -171,6 +172,8 @@ class _MyAppState extends State<MyApp> {
                           '-------------------- -------------------'} ')),
                     ],
                   ),
+                  SizedBox(height: 1,),
+                  Text("Message_code -> ${personalInformation.Message_code}"),
                   SizedBox(height: 20,),
                   TextButton(
                       style: ButtonStyle(

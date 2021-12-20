@@ -15,9 +15,14 @@ class AcsCardReaderThailand {
 
 
   static  Stream<bool> get messageStream async* {
-    await for (bool message in messageChannel.receiveBroadcastStream().map((message) => message)){
-      yield message;
+    if(Platform.isAndroid){
+      await for (bool message in messageChannel.receiveBroadcastStream().map((message) => message)){
+        yield message;
+      }
+    }else{
+      yield false;
     }
+
   }
 
   static Future<String?> get platformVersion async {
