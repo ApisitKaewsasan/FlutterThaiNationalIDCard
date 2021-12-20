@@ -40,6 +40,7 @@ public class SmartCardDevice {
     private PendingIntent mPermissionIntent;
     PersonalInformation personalInformation = new PersonalInformation();
     private Boolean reading = false;
+    private int loopConnect = 0;
 
 
     public SmartCardDevice(Context context, UsbManager manager, SmartCardDeviceEvent eventCallback) {
@@ -82,6 +83,9 @@ public class SmartCardDevice {
     public void start() {
         // For each device
 
+        if(loopConnect<5000){
+            loopConnect++;
+            personalInformation.Message_code = 0;
             personalInformation.Status = true;
             // show the list of available terminals
 
@@ -91,7 +95,8 @@ public class SmartCardDevice {
                     Log.d(TAG, device.getDeviceName());
                     if (mReader.isSupported(device)) {
                         // If device name is found
-                        mManager.requestPermission(device, mPermissionIntent);
+                        // mManager.requestPermission(device, mPermissionIntent);
+                        OpenTask(device);
                     } else {
                         personalInformation.Status = false;
                         personalInformation.Message_code = MessageKey.NotSupport;
@@ -106,8 +111,12 @@ public class SmartCardDevice {
                 eventCallback.OnSuceess(personalInformation);
             }
 
-
-
+        }else{
+            loopConnect = 0;
+            personalInformation.Status = false;
+            personalInformation.Message_code = MessageKey.TimeOutConnect;
+            eventCallback.OnSuceess(personalInformation);
+        }
     }
 
 
@@ -159,7 +168,7 @@ public class SmartCardDevice {
                                 Log.d(TAG, "Opening reader:");
                                 // SmartCardDevice.this.eventCallback.OnReady(SmartCardDevice.this);
 
-                                new OpenTask().execute(device);
+                                //  OpenTask(device);
 
                                 // show the list of available terminals
 
@@ -194,79 +203,44 @@ public class SmartCardDevice {
     };
 
 
-    private class OpenTask extends AsyncTask<UsbDevice, Void, Exception> {
-
-        @Override
-        protected Exception doInBackground(UsbDevice... params) {
-
-            Exception result = null;
-
-            try {
-
-                mReader.open(params[0]);
-
-//                EditText xx =  findViewById(R.id.main_edit_text_command);
-//                xx.setText("0x00\n0xA4\n0X04\n0x00\n0x08\n0xA0\n0X00\n0x00\n0x00\n0x54\n0x48\n0x00\n0x01");
-//
-
-
-            } catch (Exception e) {
-
-                result = e;
-            }
-
-            return result;
-        }
-
-        @Override
-        protected void onPostExecute(Exception result) {
-
-            if (result != null) {
+    void  OpenTask(UsbDevice params) {
 
 
 
-                  if(personalInformation.Status){
-                    personalInformation.Status = false;
+          try {
+            mReader.open(params);
+
+              Log.d(TAG, mReader.getReaderName());
+
+              int numSlots = mReader.getNumSlots();
+              Log.d(TAG, "Number of slots: " + numSlots);
+
+              for (int i = 0; i < numSlots; i++) {
+                  Log.d(TAG, "Number of slots: " + i);
+              }
+
+              PowerParams power = new PowerParams();
+              power.slotNum = SLOTNUM; //0
+              power.action = Reader.CARD_WARM_RESET;
+
+              // Perform power action
+              Log.d(TAG, "Slot " + numSlots + ": "
+                      + powerActionStrings[power.action] + "...");
+              new PowerTask().execute(power);
+
+          } catch (IllegalArgumentException e) {
+            personalInformation.Status = false;
             personalInformation.Message_code = MessageKey.OpenTaskError;
 
             eventCallback.OnSuceess(personalInformation);
-                     
-               Log.d(TAG, "OpenTask error : " + result.toString());
 
+            Log.d(TAG, "OpenTask error : " + e.toString());
 
-               }
-                mReader.close();
-
-            } else {
-
-                Log.d(TAG, mReader.getReaderName());
-
-                int numSlots = mReader.getNumSlots();
-                Log.d(TAG, "Number of slots: " + numSlots);
-
-                for (int i = 0; i < numSlots; i++) {
-                    Log.d(TAG, "Number of slots: " + i);
-                }
-
-                PowerParams params = new PowerParams();
-                params.slotNum = SLOTNUM; //0
-                params.action = Reader.CARD_WARM_RESET;
-
-                // Perform power action
-                Log.d(TAG, "Slot " + numSlots + ": "
-                        + powerActionStrings[params.action] + "...");
-                new PowerTask().execute(params);
-
-
-                // Add slot items
-                //  mSlotAdapter.clear();
-//                for (int i = 0; i < numSlots; i++) {
-//                    mSlotAdapter.add(Integer.toString(i));
-//                }
-
-            }
+            Log.e("TAG", e.getMessage());
         }
     }
+
+
 
     private class CloseTask extends AsyncTask<Void, Void, Void> {
 
@@ -323,14 +297,15 @@ public class SmartCardDevice {
 
             if (result.e != null) {
                if(personalInformation.Status){
-                    personalInformation.Status = false;
-            personalInformation.Message_code = MessageKey.NotInserted;
-
-            eventCallback.OnSuceess(personalInformation);
+//                    personalInformation.Status = false;
+//            personalInformation.Message_code = MessageKey.NotInserted;
+//
+//            eventCallback.OnSuceess(personalInformation);
+                   start();
               Log.d(TAG, "PowerTask : " + result.e.toString());
                }
 
-                mReader.close();
+               // mReader.close();
 
             } else {
 

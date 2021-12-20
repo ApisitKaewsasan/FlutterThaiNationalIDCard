@@ -40,7 +40,7 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
     private EventChannel.EventSink eventSink;
     private  Result result_pa;
     BroadcastReceiver mUsbReceiver;
-    private int loopConnect = 0;
+
     private Context context;
     private static final String TAG = "AcsCardReaderThailand";
 
@@ -123,17 +123,14 @@ public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHan
             @Override
             public void OnSuceess(PersonalInformation personalInformation) {
 
-                if(loopConnect<500 && !personalInformation.Status && (personalInformation.Message_code == 0 || personalInformation.Message_code == 1) ){
-                    loopConnect++;
+                if(!personalInformation.Status && (personalInformation.Message_code == 0 || personalInformation.Message_code == 1) ){
+
                     acsReaderCard(result_pa);
                 }else{
-                    if(loopConnect==500){
-                        loopConnect = 0;
-                        personalInformation.Status = false;
-                        personalInformation.Message_code = MessageKey.TimeOutConnect;
-                    }
+
                     Gson gson = new Gson();
                     try {
+
                         result.success(gson.toJson(personalInformation));
                     } catch (Exception e) {
                         Log.d(TAG, e.getMessage());
