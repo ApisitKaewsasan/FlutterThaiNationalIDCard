@@ -88,7 +88,6 @@ public class SmartCardDevice {
 
                 Log.d(TAG, device.getDeviceName());
                 if(mReader.isSupported(device)){
-
                     // If device name is found
                     mManager.requestPermission(device, mPermissionIntent);
                 }else{
@@ -199,6 +198,7 @@ public class SmartCardDevice {
             try {
 
                 mReader.open(params[0]);
+
 //                EditText xx =  findViewById(R.id.main_edit_text_command);
 //                xx.setText("0x00\n0xA4\n0X04\n0x00\n0x08\n0xA0\n0X00\n0x00\n0x00\n0x54\n0x48\n0x00\n0x01");
 //
@@ -225,7 +225,8 @@ public class SmartCardDevice {
             eventCallback.OnSuceess(personalInformation);
                      
                Log.d(TAG, "OpenTask error : " + result.toString());
-                      new CloseTask().execute();
+
+
                }
 
 

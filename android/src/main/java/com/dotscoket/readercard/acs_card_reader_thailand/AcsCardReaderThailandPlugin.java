@@ -26,112 +26,122 @@ import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
-/** AcsCardReaderThailandPlugin */
-public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHandler , EventChannel.StreamHandler{
-  /// The MethodChannel that will the communication between Flutter and native Android
-  ///
-  /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-  /// when the Flutter Engine is detached from the Activity
-  private MethodChannel channel;
-  private EventChannel messageChannel;
-  private EventChannel.EventSink eventSink;
+/**
+ * AcsCardReaderThailandPlugin
+ */
+public class AcsCardReaderThailandPlugin implements FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
+    /// The MethodChannel that will the communication between Flutter and native Android
+    ///
+    /// This local reference serves to register the plugin with the Flutter Engine and unregister it
+    /// when the Flutter Engine is detached from the Activity
+    private MethodChannel channel;
+    private EventChannel messageChannel;
+    private EventChannel.EventSink eventSink;
+    private  Result result_pa;
+    BroadcastReceiver mUsbReceiver;
 
-  BroadcastReceiver mUsbReceiver;
+    private Context context;
+    private static final String TAG = "AcsCardReaderThailand";
 
-  private Context context;
-  private static final String TAG = "AcsCardReaderThailand";
-  @Override
-  public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-    channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "acs_card_reader_thailand");
-    channel.setMethodCallHandler(this);
+    @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+        channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "acs_card_reader_thailand");
+        channel.setMethodCallHandler(this);
 
-    messageChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), "eventChannelStream");
-    messageChannel.setStreamHandler(this);
-
-
-    this.context = flutterPluginBinding.getApplicationContext();
-     DeviceConnectUSB.ReceivedBroadcastUSB(this.context,new BroadcastUSBEvent(){
-       @Override
-       public void onConnected(Boolean status) {
-         Log.d(TAG, "USB Connected..");
-         eventSink.success(status);
-       }
+        messageChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), "eventChannelStream");
+        messageChannel.setStreamHandler(this);
 
 
-       @Override
-       public void onDisconnected() {
-         Log.d(TAG, "USB Disconnected..");
-         eventSink.success(false);
-       }
-     });
-  }
-  @Override
-  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    channel.setMethodCallHandler(null);
-  }
-
-  @Override
-  public void onListen(Object arguments, EventChannel.EventSink events) {
-    this.eventSink = events;
-  }
+        this.context = flutterPluginBinding.getApplicationContext();
+        DeviceConnectUSB.ReceivedBroadcastUSB(this.context, new BroadcastUSBEvent() {
+            @Override
+            public void onConnected(Boolean status) {
+                Log.d(TAG, "USB Connected..");
+                eventSink.success(status);
+            }
 
 
-
-  @Override
-  public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    if (call.method.equals("getPlatformVersion")) {
-      result.success("Android " + android.os.Build.VERSION.RELEASE);
-    } else if(call.method.equals("acs_card")){
-
-      acsReaderCard(result);
-    }else  {
-      result.notImplemented();
+            @Override
+            public void onDisconnected() {
+                Log.d(TAG, "USB Disconnected..");
+                eventSink.success(false);
+            }
+        });
     }
-  }
+
+    @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        channel.setMethodCallHandler(null);
+    }
+
+    @Override
+    public void onListen(Object arguments, EventChannel.EventSink events) {
+        this.eventSink = events;
+    }
 
 
-  void acsReaderCard(Result result){
-    SmartCardDevice.getSmartCardDevice(context, new SmartCardDeviceEvent() {
-      @Override
-      public void OnReady(SmartCardDevice device) {
-        Toast.makeText(
-                context,
-                "OnReady",
-                Toast.LENGTH_LONG
-        ).show();
-      }
-
-      @Override
-      public void OnDetached(SmartCardDevice device) {
-        Toast.makeText(
-                context,
-                "Smart Card is removed",
-                Toast.LENGTH_LONG
-        ).show();
-      }
-
-      @Override
-      public void OnErrory(String message) {
-        Toast.makeText(context,message, Toast.LENGTH_SHORT).show();
-      }
-
-      @SuppressLint("LongLogTag")
-      @Override
-      public void OnSuceess(PersonalInformation personalInformation) {
-        Gson gson = new Gson();
-      try {
-        result.success(gson.toJson(personalInformation));
-      }catch (Exception e){
-        Log.d(TAG,e.getMessage());
-      }
-      }
-    });
-  }
+    @Override
+    public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
+        if (call.method.equals("getPlatformVersion")) {
+            result.success("Android " + android.os.Build.VERSION.RELEASE);
+        } else if (call.method.equals("acs_card")) {
+            result_pa = result;
+            acsReaderCard(result);
+        } else {
+            result.notImplemented();
+        }
+    }
 
 
+    void acsReaderCard(Result result) {
+        SmartCardDevice.getSmartCardDevice(context, new SmartCardDeviceEvent() {
+            @Override
+            public void OnReady(SmartCardDevice device) {
+                Toast.makeText(
+                        context,
+                        "OnReady",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
 
-  @Override
-  public void onCancel(Object arguments) {
+            @Override
+            public void OnDetached(SmartCardDevice device) {
+                Toast.makeText(
+                        context,
+                        "Smart Card is removed",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
 
-  }
+            @Override
+            public void OnErrory(String message) {
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+            }
+
+            @SuppressLint("LongLogTag")
+            @Override
+            public void OnSuceess(PersonalInformation personalInformation) {
+
+                if(!personalInformation.Status){
+                    acsReaderCard(result_pa);
+                }else{
+                    Gson gson = new Gson();
+                    try {
+                        result.success(gson.toJson(personalInformation));
+                    } catch (Exception e) {
+                        Log.d(TAG, e.getMessage());
+                        acsReaderCard(result_pa);
+
+                    }
+                }
+
+            }
+        });
+    }
+
+
+    @Override
+    public void onCancel(Object arguments) {
+
+    }
 }
