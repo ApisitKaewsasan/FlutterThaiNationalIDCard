@@ -222,13 +222,14 @@ public class SmartCardDevice {
                   if(personalInformation.Status){
                     personalInformation.Status = false;
             personalInformation.Message_code = MessageKey.OpenTaskError;
+
             eventCallback.OnSuceess(personalInformation);
                      
                Log.d(TAG, "OpenTask error : " + result.toString());
 
 
                }
-
+                mReader.close();
 
             } else {
 
@@ -318,11 +319,12 @@ public class SmartCardDevice {
                if(personalInformation.Status){
                     personalInformation.Status = false;
             personalInformation.Message_code = MessageKey.NotInserted;
+
             eventCallback.OnSuceess(personalInformation);
               Log.d(TAG, "PowerTask : " + result.e.toString());
                }
 
-
+                mReader.close();
 
             } else {
 
