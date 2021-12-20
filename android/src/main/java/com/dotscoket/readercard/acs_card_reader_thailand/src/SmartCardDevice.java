@@ -41,6 +41,7 @@ public class SmartCardDevice {
     PersonalInformation personalInformation = new PersonalInformation();
     private Boolean reading = false;
 
+
     public SmartCardDevice(Context context, UsbManager manager, SmartCardDeviceEvent eventCallback) {
 
         this.context = context;
@@ -80,29 +81,31 @@ public class SmartCardDevice {
 
     public void start() {
         // For each device
-  personalInformation.Status = true;
-        // show the list of available terminals
 
-        if (mManager.getDeviceList().size() > 0) {
-            for (UsbDevice device : mManager.getDeviceList().values()) {
+            personalInformation.Status = true;
+            // show the list of available terminals
 
-                Log.d(TAG, device.getDeviceName());
-                if(mReader.isSupported(device)){
-                    // If device name is found
-                    mManager.requestPermission(device, mPermissionIntent);
-                }else{
-                    personalInformation.Status = false;
-                    personalInformation.Message_code = MessageKey.NotSupport;
-                    eventCallback.OnSuceess(personalInformation);
+            if (mManager.getDeviceList().size() > 0) {
+                for (UsbDevice device : mManager.getDeviceList().values()) {
+
+                    Log.d(TAG, device.getDeviceName());
+                    if (mReader.isSupported(device)) {
+                        // If device name is found
+                        mManager.requestPermission(device, mPermissionIntent);
+                    } else {
+                        personalInformation.Status = false;
+                        personalInformation.Message_code = MessageKey.NotSupport;
+                        eventCallback.OnSuceess(personalInformation);
+                    }
+
+                    break;
                 }
-
-                break;
+            } else {
+                personalInformation.Status = false;
+                personalInformation.Message_code = MessageKey.NotFoundDevice;
+                eventCallback.OnSuceess(personalInformation);
             }
-        } else {
-            personalInformation.Status = false;
-            personalInformation.Message_code = MessageKey.NotFoundDevice;
-            eventCallback.OnSuceess(personalInformation);
-        }
+
 
 
     }
@@ -127,7 +130,10 @@ public class SmartCardDevice {
 
         cardDevice = new SmartCardDevice(context, manager, eventCallback);
 
-        cardDevice.start();
+
+            cardDevice.start();
+
+
 
         return cardDevice;
 

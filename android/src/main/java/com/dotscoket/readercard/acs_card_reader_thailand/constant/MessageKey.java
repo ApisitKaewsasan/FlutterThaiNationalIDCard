@@ -7,4 +7,5 @@ public class MessageKey
     public  static  int PermissionDenied = 2;
     public static int NotSupport = 3;
     public static int NotFoundDevice = 4;
+    public static int TimeOutConnect = 5;
 }
